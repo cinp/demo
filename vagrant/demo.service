@@ -1,0 +1,11 @@
+[Unit]
+Description=CINP Demo Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDir=/opt/demo/src
+ExecStart=/opt/demo/src/start.py
+
+[Install]
+WantedBy=mutli-user.target
