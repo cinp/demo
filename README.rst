@@ -29,6 +29,13 @@ Talking to CInP
 NOTE: you may want to read the generic protocol docs to know what the various
 methods are and what to expect.
 
+Web Extension
+-------------
+
+There is a web extension (Firefox/Chrome Extension) aviable at https://github.com/cinp/web_extension
+You can clone that repo and load it into your browser in dev mode, or it is also
+published to the Chrome Web Store at https://chrome.google.com/webstore/detail/cinp-generic-client/lacnhpojnjgdohcdggednghjibhgkeop?hl=en-US&gl=US
+
 Commandline/Curl
 ----------------
 
@@ -270,6 +277,7 @@ Python
 First install the CInP python library
 
 ::
+
   pip3 install cinp
 
 Now launch your python3 interpreture of choice, and let's try a few things out::
@@ -358,8 +366,3 @@ Now we can try getting the car's detail::
   <stack trace>
 
 sure enough we don't own the car anymore, so we can't see it.
-
-JavaScript
-----------
-
-get js library and run node....
