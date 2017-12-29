@@ -7,7 +7,7 @@ from demo.User.models import User
 cinp = CInP( 'Car', '0.1', 'Cars and their Models' )
 
 
-@cinp.model( property_list=[], not_allowed_method_list=[] )
+@cinp.model( property_list=[], not_allowed_verb_list=[] )
 class Model( models.Model ):
   """
 All the Make/Model/Years for the cars
@@ -20,14 +20,17 @@ All the Make/Model/Years for the cars
 
   @cinp.check_auth()
   @staticmethod
-  def checkAuth( user, method, id_list, action=None ):
+  def checkAuth( user, verb, id_list, action=None ):
     return True
+
+  class Meta:
+    unique_together = ( ( 'make', 'model', 'year' ), )
 
   def __str__( self ):
     return 'Model "{0}" "{1}" "{2}"'.format( self.make, self.model, self.year )
 
 
-@cinp.model( property_list=[], not_allowed_method_list=[] )
+@cinp.model( property_list=[], not_allowed_verb_list=[] )
 class Car( models.Model ):
   """
 This is all the cars own by the users.
@@ -72,8 +75,8 @@ is left out, the car becomes unclaimed.
 
   @cinp.check_auth()
   @staticmethod
-  def checkAuth( user, method, id_list, action=None ):
-    if method in ( 'DESCRIBE', 'LIST' ):
+  def checkAuth( user, verb, id_list, action=None ):
+    if verb in ( 'DESCRIBE', 'LIST' ):
       return True
 
     if id_list is None:

@@ -19,15 +19,15 @@ Docker
 
 ::
 
-  docker build .
-  docker run cinp/demo
+  docker build . -t cinp/demo
+  docker run -p 8888:8888 -d cinp/demo
 
 
 Talking to CInP
 ===============
 
 NOTE: you may want to read the generic protocol docs to know what the various
-methods are and what to expect.
+Verbs are and what to expect.
 
 Web Extension
 -------------
@@ -57,7 +57,7 @@ should output something like::
   < Server: gunicorn/19.4.5
   < Date: Fri, 01 Sep 2017 04:35:41 GMT
   < Connection: close
-  < Method: DESCRIBE
+  < Verb: DESCRIBE
   < Type: Namespace
   < Access-Control-Expose-Headers: Method, Type, Cinp-Version, Count, Position, Total, Multi-Object, Object-Id
   < Cache-Control: max-age=0
@@ -90,7 +90,7 @@ Let's List the Cars::
   < Total: 8
   < Access-Control-Allow-Origin: *
   < Position: 0
-  < Method: LIST
+  < Verb: LIST
   < Access-Control-Expose-Headers: Method, Type, Cinp-Version, Count, Position, Total, Multi-Object, Object-Id
   < Content-Type: application/json;charset=utf-8
   < Content-Length: 240
@@ -146,7 +146,7 @@ a session::
   < Access-Control-Allow-Origin: *
   < Multi-Object: False
   < Cinp-Version: 0.9
-  < Method: CALL
+  < Verb: CALL
   < Cache-Control: no-cache
   < Access-Control-Expose-Headers: Method, Type, Cinp-Version, Count, Position, Total, Multi-Object, Object-Id
   < Content-Type: application/json;charset=utf-8
@@ -200,7 +200,7 @@ try another::
   < Server: gunicorn/19.4.5
   < Date: Wed, 06 Sep 2017 03:15:30 GMT
   < Connection: close
-  < Method: GET
+  < Verb: GET
   < Multi-Object: False
   < Cinp-Version: 0.9
   < Access-Control-Expose-Headers: Method, Type, Cinp-Version, Count, Position, Total, Multi-Object, Object-Id
@@ -213,7 +213,7 @@ try another::
   {"name": "Commuter", "model": "/api/v1/Car/Model:4:", "cost": 500.0, "created": "2017-09-06T00:46:25.654209+00:00", "updated": "2017-09-06T00:46:25.654185+00:00", "owner": "/api/v1/User/User:bob:"}
 
 Now we can see the car, let's sell it to Sally.  We do that by calling the sell
-method on that car::
+action on that car::
 
   $ curl -X CALL -H "CINP-VERSION: 0.9" -H "AUTH-ID: bob" -H "AUTH-TOKEN: ysGdBiFBtqdlkCFMzOwCHZPlIqvvUo" -d '{ "to": "/api/v1/User/User:sally:" }' -v http://127.0.0.1:8888/api/v1/Car/Car:Commuter:\(sell\)
   > CALL /api/v1/Car/Car:Commuter:(sell) HTTP/1.1
@@ -231,7 +231,7 @@ method on that car::
   < Server: gunicorn/19.4.5
   < Date: Wed, 06 Sep 2017 03:18:04 GMT
   < Connection: close
-  < Method: CALL
+  < Verb: CALL
   < Multi-Object: False
   < Cinp-Version: 0.9
   < Access-Control-Expose-Headers: Method, Type, Cinp-Version, Count, Position, Total, Multi-Object, Object-Id
@@ -353,7 +353,7 @@ try another::
    'owner': '/api/v1/User/User:bob:'}
 
 Now we can see the car, let's sell it to Sally.  We do that by calling the sell
-method on that car::
+action on that car::
 
   In [10]: conn.call( '/api/v1/Car/Car:Commuter:(sell)', { 'to': '/api/v1/User/User:sally:' } )
 
