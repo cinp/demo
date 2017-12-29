@@ -83,8 +83,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Car',
             fields=[
-                ('name', models.CharField(max_length=50, serialize=False, primary_key=True)),
-                ('cost', models.FloatField()),
+                ('name', models.CharField(serialize=False, primary_key=True, max_length=50)),
+                ('cost', models.FloatField(help_text='How much the car is worth')),
                 ('updated', models.DateTimeField(auto_now=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
             ],
@@ -92,13 +92,17 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Model',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, primary_key=True, auto_created=True)),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
                 ('make', models.CharField(max_length=100)),
                 ('model', models.CharField(max_length=100)),
                 ('year', models.IntegerField()),
                 ('updated', models.DateTimeField(auto_now=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
             ],
+        ),
+        migrations.AlterUniqueTogether(
+            name='model',
+            unique_together=set([('make', 'model', 'year')]),
         ),
         migrations.AddField(
             model_name='car',
@@ -108,7 +112,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='car',
             name='owner',
-            field=models.ForeignKey(to='User.User', null=True, blank=True),
+            field=models.ForeignKey(blank=True, null=True, to='User.User'),
         ),
         migrations.RunPython( load_models ),
         migrations.RunPython( load_cars ),
