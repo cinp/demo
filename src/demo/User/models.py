@@ -1,131 +1,87 @@
-import hashlib
-import random
-import string
-from datetime import datetime, timedelta, timezone
-from django.db import models
+from importlib import import_module
 
+from django.conf import settings
+from django.contrib import auth
+from django.contrib.auth.models import AnonymousUser
 from cinp.orm_django import DjangoCInP as CInP
+from cinp.server_common import InvalidRequest
+
+session_engine = import_module( settings.SESSION_ENGINE )
 
 
-# this function is used by cinp to turnthe auth id and tiken headers into a user
-# object, that user object is passed to the checkAuth functions.  CInP expects
-# the object returned by this to have the attributes `isActive`, `isSuperuser`,
-# and `isAnonymouse`
 def getUser( auth_id, auth_token ):
   if auth_id is None or auth_token is None:
+    return AnonymousUser()
+
+  request = Request( session_engine.SessionStore( auth_token ) )
+
+  if request.user.username != auth_id:
     return None
 
-  try:
-    session = Session.objects.get( user=auth_id, token=auth_token )
-  except ( Session.DoesNotExist, User.DoesNotExist ):
+  if not request.user.is_active:
     return None
 
-  if not session.user.isActive:
-    return None
-
-  if not session.isActive:
-    return None
-
-  return session.user
+  return request.user
 
 
-# TODO: this has many security issues, spend some time and think this out better
+"""
 
-cinp = CInP( 'User', '0.1' )
-
-
-@cinp.model( property_list=[ 'isActive' ], not_allowed_verb_list=[ 'LIST', 'DELETE', 'CREATE', 'CALL' ], hide_field_list=[ 'password' ] )
-class User( models.Model ):
-  username = models.CharField( max_length=40, primary_key=True )
-  password = models.CharField( editable=False, max_length=64 )
-  nick_name = models.CharField( max_length=100, null=True, blank=True )
-  superuser = models.BooleanField( default=False, editable=False )
-  updated = models.DateTimeField( editable=False, auto_now=True )
-  created = models.DateTimeField( editable=False, auto_now_add=True )
-
-  @property
-  def isActive( self ):
-    return True
-
-  @property
-  def isSuperuser( self ):
-    return self.superuser
-
-  @property
-  def isAnonymouse( self ):
-    return False
-
-  @cinp.action( paramater_type_list=[ 'String' ] )
-  def setPassword( self, password ):
-    self.password = hashlib.sha256( password.encode( 'utf-8' ) ).hexdigest()
-    self.save()
-
-  @cinp.check_auth()
-  @staticmethod
-  def checkAuth( user, verb, id_list, action=None ):
-    if id_list is not None and len( id_list ) >= 1 and id_list[0] != user.username:
-      return False
-
-    return True
-
-  def __str__( self ):
-    return 'User "{0}"'.format( self.username )
+TODO:
+  add tracking logging, or some place to send tracking info
+"""
 
 
-@cinp.model( property_list=[ 'isActive' ], not_allowed_verb_list=[ 'GET', 'LIST', 'DELETE', 'CREATE', 'UPDATE' ] )
-class Session( models.Model ):
-  token = models.CharField( max_length=64, primary_key=True )
-  user = models.ForeignKey( User )
-  last_hearbeat = models.DateTimeField()
-  created = models.DateTimeField( editable=False, auto_now_add=True )
+class Request():
+  def __init__( self, session, user=None ):
+    self.session = session
+    if user is None:
+      self.user = auth.get_user( self )
+    else:
+      self.user = user
+    self.user._django_session = session
+    self.META = {}
 
-  @property
-  def isActive( self ):
-    return self.last_hearbeat < ( datetime.now( timezone.utc ) + timedelta( seconds=30 ) )
 
+cinp = CInP( 'Auth', '2.0' )
+
+
+@cinp.staticModel( not_allowed_verb_list=[ 'LIST', 'GET', 'DELETE', 'CREATE', 'UPDATE' ] )
+class User():
   @cinp.action( return_type='String', paramater_type_list=[ 'String', 'String' ] )
   @staticmethod
   def login( username, password ):
-    """
-Call me to login
-    """
-    try:
-      user = User.objects.get( username=username )
-    except User.DoesNotExist:
-      raise ValueError( 'User Does Not Exist' )
+    user = auth.authenticate( username=username, password=password )
+    if user is None:
+      raise InvalidRequest( 'Invalid Login' )
 
-    password = hashlib.sha256( password.encode( 'utf-8' ) ).hexdigest()
-    if password != user.password:
-      raise ValueError( 'Invalid Password' )
+    request = Request(session=session_engine.SessionStore( None ), user=user )
 
-    token = ''.join( random.choice( string.ascii_letters ) for _ in range( 30 ) )
-    session = Session( token=token, user=user )
-    session.last_hearbeat = datetime.now( timezone.utc )
-    session.save()
-    session.hearbeat()
+    auth.login( request, user )
+    request.session.save()
 
-    return token
+    return request.session.session_key
 
-  @cinp.action( paramater_type_list=[ 'String' ] )
-  def logout( self, token ):
-    session = Session.objects.get( token=token )
-    session.delete()
+  @cinp.action( paramater_type_list=[ '_USER_' ] )
+  @staticmethod
+  def logout( user ):
+    request = Request( session=user._django_session, user=user )
+    auth.logout( request )
 
-  @cinp.action()
-  def hearbeat( self ):
-    self.last_checkin = datetime.now( timezone.utc )
-    self.save()
+  @cinp.action( return_type='String', paramater_type_list=[ '_USER_' ] )
+  @staticmethod
+  def whoami( user ):
+    return str( user )
+
+  @cinp.action( paramater_type_list=[ '_USER_', 'String' ] )
+  @staticmethod
+  def changePassword( user, password ):
+    user.set_password( password )
+    user.save()
 
   @cinp.check_auth()
   @staticmethod
   def checkAuth( user, verb, id_list, action=None ):
-    if action is not None:
-      return True
-
-    if verb == 'DESCRIBE':
-      return True
-
-    return False
+    return True
 
   def __str__( self ):
-    return 'Session for "{0}"'.format( self.user.username )
+    return 'User'

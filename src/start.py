@@ -7,6 +7,7 @@ os.environ.setdefault( 'DJANGO_SETTINGS_MODULE', 'demo.settings' )
 import django
 django.setup()
 
+import sys
 import logging
 
 from gunicorn.app.base import BaseApplication
@@ -30,6 +31,7 @@ class GunicornApp( BaseApplication ):
   def load( self ):
     return self.application
 
+
 if __name__ == '__main__':
   logging.basicConfig()
   logger = logging.getLogger()
@@ -37,7 +39,7 @@ if __name__ == '__main__':
   logger.info( 'Starting up...' )
 
   logger.debug( 'Creating Server...' )
-  app = WerkzeugServer( root_path='/api/v1/', root_version='1.0', debug=DEBUG, get_user=getUser, cors_allow_list=[ '*' ] )
+  app = WerkzeugServer( root_path='/api/v1/', root_version='1.0', debug=DEBUG, get_user=getUser, cors_allow_list=[ '*' ], debug_dump_location=None )
   logger.debug( 'Registering Models...' )
 
   app.registerNamespace( '/', 'demo.User' )
@@ -47,10 +49,9 @@ if __name__ == '__main__':
   app.validate()
 
   logger.info( 'Starting Server...' )
-  GunicornApp( app, { 'bind': '0.0.0.0:8888', 'loglevel': 'info' } ).run()
+  GunicornApp( app, { 'bind': '0.0.0.0:8889', 'loglevel': 'debug' } ).run()
   logger.info( 'Server Done...' )
   logger.info( 'Shutting Down...' )
   logger.info( 'Done!' )
   logger.shutdown
   sys.exit( 0 )
-

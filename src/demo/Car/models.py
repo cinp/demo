@@ -39,8 +39,8 @@ a list, if your query includes a car that is not yours, you will get a not
 authorized(Unless you are a super user).
   """
   name = models.CharField( max_length=50, primary_key=True )
-  owner = models.ForeignKey( User, null=True, blank=True )
-  model = models.ForeignKey( Model )
+  owner = models.ForeignKey( User, null=True, blank=True, on_delete=models.PROTECT )
+  model = models.ForeignKey( Model, on_delete=models.PROTECT )
   cost = models.FloatField( help_text='How much the car is worth' )
   updated = models.DateTimeField( editable=False, auto_now=True )
   created = models.DateTimeField( editable=False, auto_now_add=True )
