@@ -11,9 +11,10 @@ import sys
 import logging
 
 from gunicorn.app.base import BaseApplication
+
 from cinp.server_werkzeug import WerkzeugServer
 
-from demo.User.models import getUser
+from demo.Auth.models import getUser
 
 DEBUG = True
 
@@ -42,14 +43,14 @@ if __name__ == '__main__':
   app = WerkzeugServer( root_path='/api/v1/', root_version='1.0', debug=DEBUG, get_user=getUser, cors_allow_list=[ '*' ], debug_dump_location=None )
   logger.debug( 'Registering Models...' )
 
-  app.registerNamespace( '/', 'demo.User' )
+  app.registerNamespace( '/', 'demo.Auth' )
   app.registerNamespace( '/', 'demo.Car' )
 
   logger.info( 'Validating...' )
   app.validate()
 
   logger.info( 'Starting Server...' )
-  GunicornApp( app, { 'bind': '0.0.0.0:8889', 'loglevel': 'debug' } ).run()
+  GunicornApp( app, { 'bind': '0.0.0.0:8888', 'loglevel': 'debug' } ).run()
   logger.info( 'Server Done...' )
   logger.info( 'Shutting Down...' )
   logger.info( 'Done!' )
